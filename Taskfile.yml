@@ -1,0 +1,54 @@
+version: '3'
+
+tasks:
+
+  build:
+    desc: Build
+    cmd: go build -o /dev/null
+
+  install:
+    desc: Intsall
+    cmd: go install
+
+  test:
+    desc: Test
+    cmd: go test ./...
+
+  coverage:
+    desc: Test with coverage
+    cmd: go test --cover ./...
+
+  coverage-html:
+    desc: Test with coverage in HTML
+    cmd: go test -coverprofile=coverage.out ./... && go tool cover -html=coverage.out -o coverage.html
+
+  open-coverage-html:
+    desc: Test with coverage in HTML and open the HTML
+    cmds:
+    - task coverage-html
+    - open coverage.html
+
+  completion-mac:
+    desc: Generate bash completion and save to homebrew
+    cmd: go run main.go completion bash > /opt/homebrew/etc/bash_completion.d/langchain-rag
+
+  completion-linux:
+    desc: Generate bash completion and save configuration directory
+    cmd: go run main.go completion bash | sudo tee /etc/bash_completion.d/langchain-rag
+
+  db-up:
+    desc: Start vector database
+    cmd: docker compose up -d vector-database
+
+  db-logs:
+    desc: Show logs of vector database
+    cmd: docker compose logs -f vector-database
+
+  db-list-collections:
+    desc:  List collections of vector database
+    silent: true
+    cmd: xh http://localhost:8000/api/v1/collections
+
+  db-shell:
+    desc: Open shell of vector database
+    cmd: docker compose exec -it vector-database bash

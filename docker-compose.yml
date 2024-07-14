@@ -1,0 +1,13 @@
+services:
+
+  vector-database:
+    image: chromadb/chroma:0.5.4
+    ports:
+      - 8000:8000
+    environment:
+      - IS_PERSISTENT=TRUE
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  chroma_data:
