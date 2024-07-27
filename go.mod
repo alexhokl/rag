@@ -1,4 +1,4 @@
-module github.com/alexhokl/langchain-rag
+module github.com/alexhokl/rag
 
 go 1.22.4
 

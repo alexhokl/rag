@@ -30,11 +30,11 @@ tasks:
 
   completion-mac:
     desc: Generate bash completion and save to homebrew
-    cmd: go run main.go completion bash > /opt/homebrew/etc/bash_completion.d/langchain-rag
+    cmd: go run main.go completion bash > /opt/homebrew/etc/bash_completion.d/rag
 
   completion-linux:
     desc: Generate bash completion and save configuration directory
-    cmd: go run main.go completion bash | sudo tee /etc/bash_completion.d/langchain-rag
+    cmd: go run main.go completion bash | sudo tee /etc/bash_completion.d/rag
 
   db-up:
     desc: Start vector database
