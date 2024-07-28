@@ -52,3 +52,11 @@ tasks:
   db-shell:
     desc: Open shell of vector database
     cmd: docker compose exec -it vector-database bash
+
+  db-stop:
+    desc: Stop vector database
+    cmd: docker compose stop vector-database
+
+  db-down:
+    desc: Stop and remove vector database
+    cmd: docker compose down -v
