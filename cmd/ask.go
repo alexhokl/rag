@@ -148,9 +148,9 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		Please write in full sentences with correct spelling and punctuation. if it makes sense use lists.
 		If the documentation doen't contain the answer, just respond that you are unable to find an answer.
 	    Explain the reasoning as well.`
-	relevantTexts := make([]string, len(relevantDocuments))
-	for i, doc := range relevantDocuments {
-		relevantTexts[i] = doc.PageContent
+	relevantTexts := make([]string, 0, len(relevantDocuments))
+	for _, doc := range relevantDocuments {
+		relevantTexts = append(relevantTexts, doc.PageContent)
 	}
 	userPrompt := fmt.Sprintf("Documentation: %s \n\nQuestion: %s \n\nAnswer: ", strings.Join(relevantTexts, " ; "), askOpts.question)
 	_, err = llm.GenerateContent(
