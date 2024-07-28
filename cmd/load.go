@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alexhokl/rag/documentloaders"
 	"github.com/amikos-tech/chroma-go/types"
 	"github.com/spf13/cobra"
-	"github.com/tmc/langchaingo/documentloaders"
 	"github.com/tmc/langchaingo/embeddings"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"github.com/tmc/langchaingo/schema"
@@ -15,14 +15,16 @@ import (
 	"github.com/tmc/langchaingo/vectorstores/chroma"
 )
 
+const VECTOR_STORE_BATCH_SIZE = 50
+
 type loadOptions struct {
 	documentPath         string
 	databaseURL          string
 	databaseName         string
-	filePattern          string
 	splitterChunkSize    int
 	splitterChunkOverlap int
 	embeddingModelName   string
+	baseSourceURL        string
 }
 
 var loadOpts loadOptions
@@ -40,10 +42,10 @@ func init() {
 	flags.StringVarP(&loadOpts.documentPath, "document-path", "f", "", "Path to document file(s)")
 	flags.StringVarP(&loadOpts.databaseURL, "database-url", "d", "http://localhost:8000", "URL of vector database")
 	flags.StringVarP(&loadOpts.databaseName, "database-name", "n", "", "Name of vector database")
-	flags.StringVarP(&loadOpts.filePattern, "file-pattern", "p", "**/*.md", "File glob pattern")
 	flags.IntVar(&loadOpts.splitterChunkSize, "splitter-chunk-size", 1500, "Chunk size for splitter")
 	flags.IntVar(&loadOpts.splitterChunkOverlap, "splitter-chunk-overlap", 300, "Chunk overlap for splitter")
 	flags.StringVarP(&loadOpts.embeddingModelName, "embedding-model", "e", "nomic-embed-text", "Name of embedding model")
+	flags.StringVar(&loadOpts.baseSourceURL, "base-source-url", "", "Base source URL")
 
 	loadCmd.MarkFlagRequired("document-path")
 }
@@ -61,13 +63,13 @@ func runLoad(cmd *cobra.Command, args []string) error {
 		loadOpts.databaseURL,
 	)
 
-	documents, err := RetrieveDocuments(loadOpts.documentPath, loadOpts.filePattern)
+	documents, err := RetrieveDocuments(loadOpts.documentPath, loadOpts.baseSourceURL)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve documents: %w", err)
 	}
 	fmt.Printf("retrieved [%d] documents\n", len(documents))
 
-	splitter := CreateTextSplitter(loadOpts.splitterChunkSize, loadOpts.splitterChunkOverlap)
+	splitter := createMarkdownSplitter(loadOpts.splitterChunkSize, loadOpts.splitterChunkOverlap)
 	_, err = CreateDatabase(
 		ctx,
 		splitter,
@@ -84,12 +86,20 @@ func runLoad(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func RetrieveDocuments(documentPath, filePattern string) ([]schema.Document, error) {
-	loader := documentloaders.NewNotionDirectory(documentPath)
+func RetrieveDocuments(documentPath, baseSourceURL string) ([]schema.Document, error) {
+	loader := documentloaders.NewMarkdownDirectory(documentPath, baseSourceURL)
 	return loader.Load()
 }
 
-func CreateTextSplitter(chunkSize, chunkOverlap int) textsplitter.TextSplitter {
+func createMarkdownSplitter(chunkSize, chunkOverlap int) textsplitter.TextSplitter {
+	return textsplitter.NewMarkdownTextSplitter(
+		textsplitter.WithChunkSize(chunkSize),
+		textsplitter.WithChunkOverlap(chunkOverlap),
+		textsplitter.WithHeadingHierarchy(true),
+	)
+}
+
+func createTextSplitter(chunkSize, chunkOverlap int) textsplitter.TextSplitter {
 	return textsplitter.NewRecursiveCharacter(
 		textsplitter.WithChunkSize(chunkSize),
 		textsplitter.WithChunkOverlap(chunkOverlap),
@@ -128,11 +138,22 @@ func CreateDatabase(
 	if err != nil {
 		return nil, fmt.Errorf("failed to create vector store: %w", err)
 	}
-	storedDocuments, err := store.AddDocuments(ctx, splittedDocuments)
-	if err != nil {
-		return nil, fmt.Errorf("failed to store documents: %w", err)
+
+	fmt.Printf("about to store [%d] splitted documents...\n", len(splittedDocuments))
+
+	storedDocumentIDs := make([]string, 0, len(splittedDocuments))
+	for i := 0; i < len(splittedDocuments); i += VECTOR_STORE_BATCH_SIZE {
+		end := i + VECTOR_STORE_BATCH_SIZE
+		if end > len(splittedDocuments) {
+			end = len(splittedDocuments)
+		}
+		storedDocs, err := store.AddDocuments(ctx, splittedDocuments[i:end])
+		if err != nil {
+			return nil, fmt.Errorf("failed to store documents: %w", err)
+		}
+		storedDocumentIDs = append(storedDocumentIDs, storedDocs...)
 	}
-	fmt.Printf("stored [%d] splitted documents\n", len(storedDocuments))
+	fmt.Printf("stored [%d] splitted documents\n", len(storedDocumentIDs))
 	return store, nil
 }
 
