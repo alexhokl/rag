@@ -63,14 +63,14 @@ func runLoad(cmd *cobra.Command, args []string) error {
 		loadOpts.databaseURL,
 	)
 
-	documents, err := RetrieveDocuments(loadOpts.documentPath, loadOpts.baseSourceURL)
+	documents, err := retrieveDocuments(loadOpts.documentPath, loadOpts.baseSourceURL)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve documents: %w", err)
 	}
 	fmt.Printf("retrieved [%d] documents\n", len(documents))
 
 	splitter := createMarkdownSplitter(loadOpts.splitterChunkSize, loadOpts.splitterChunkOverlap)
-	_, err = CreateDatabase(
+	_, err = createDatabase(
 		ctx,
 		splitter,
 		documents,
@@ -86,7 +86,7 @@ func runLoad(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func RetrieveDocuments(documentPath, baseSourceURL string) ([]schema.Document, error) {
+func retrieveDocuments(documentPath, baseSourceURL string) ([]schema.Document, error) {
 	loader := documentloaders.NewMarkdownDirectory(documentPath, baseSourceURL)
 	return loader.Load()
 }
@@ -106,7 +106,7 @@ func createTextSplitter(chunkSize, chunkOverlap int) textsplitter.TextSplitter {
 	)
 }
 
-func CreateDatabase(
+func createDatabase(
 	ctx context.Context,
 	splitter textsplitter.TextSplitter,
 	documents []schema.Document,
