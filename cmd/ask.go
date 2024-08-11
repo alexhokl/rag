@@ -145,8 +145,8 @@ func runAsk(cmd *cobra.Command, args []string) error {
 	systemPrompt := `
 		You are an assistant for question-answering tasks.
 		Use the following pieces of retrieved documentation to answer the question.
-		Please write in full sentences with correct spelling and punctuation. if it makes sense use lists.
-		If the documentation doen't contain the answer, just respond that you are unable to find an answer.
+		Please write in full sentences with correct spelling and punctuation. If it makes sense, use lists.
+		If the documentation does not contain the answer, just respond that you are unable to find an answer.
 	    Explain the reasoning as well.`
 	relevantTexts := make([]string, 0, len(relevantDocuments))
 	for _, doc := range relevantDocuments {
