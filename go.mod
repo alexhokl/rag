@@ -2,7 +2,7 @@ module github.com/alexhokl/rag
 
 go 1.22.4
 
-require github.com/alexhokl/helper v0.0.83
+require github.com/alexhokl/helper v0.0.84
 
 require (
 	github.com/AssemblyAI/assemblyai-go-sdk v1.3.0 // indirect
@@ -58,3 +58,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// replace github.com/alexhokl/helper => ../helper

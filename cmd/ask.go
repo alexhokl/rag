@@ -6,9 +6,8 @@ import (
 	"strings"
 
 	"github.com/alexhokl/helper/jsonhelper"
+	"github.com/alexhokl/helper/ollamahelper"
 	"github.com/spf13/cobra"
-	"github.com/tmc/langchaingo/embeddings"
-	"github.com/tmc/langchaingo/llms"
 	"github.com/tmc/langchaingo/llms/ollama"
 	"github.com/tmc/langchaingo/schema"
 	"github.com/tmc/langchaingo/vectorstores"
@@ -59,7 +58,7 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		ctx = context.Background()
 	}
 
-	embedder, err := getEmbedder(askOpts.embeddingModelName)
+	embedder, err := ollamahelper.GetEmbedder(askOpts.embeddingModelName)
 	if err != nil {
 		return fmt.Errorf("unable to load embedder: %w", err)
 	}
@@ -109,24 +108,13 @@ func runAsk(cmd *cobra.Command, args []string) error {
 			Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.
 			Provide the binary score as a JSON with a single key 'score' and no premable or explanation.`
 		graderUserPrompt := fmt.Sprintf("Here is the retrieved document: %s \n\nHere is the user question: %s", doc.PageContent, askOpts.question)
-		gradingResponse, err := llm.GenerateContent(
-			ctx,
-			[]llms.MessageContent{
-				{
-					Role:  llms.ChatMessageTypeSystem,
-					Parts: []llms.ContentPart{llms.TextContent{Text: graderSystemPrompt}},
-				},
-				{
-					Role:  llms.ChatMessageTypeHuman,
-					Parts: []llms.ContentPart{llms.TextContent{Text: graderUserPrompt}},
-				},
-			},
-		)
+
+		gradingResponse, err := ollamahelper.GenerateContent(ctx, llm, graderSystemPrompt, graderUserPrompt)
 		if err != nil {
 			return fmt.Errorf("unable to grade reference document: %w", err)
 		}
 		var graderResponse GraderResponse
-		errParse := jsonhelper.ParseJSONString(gradingResponse.Choices[0].Content, &graderResponse)
+		errParse := jsonhelper.ParseJSONString(gradingResponse, &graderResponse)
 		if errParse != nil {
 			return fmt.Errorf("unable to parse grading response: %w", errParse)
 		}
@@ -153,40 +141,13 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		relevantTexts = append(relevantTexts, doc.PageContent)
 	}
 	userPrompt := fmt.Sprintf("Documentation: %s \n\nQuestion: %s \n\nAnswer: ", strings.Join(relevantTexts, " ; "), askOpts.question)
-	_, err = llm.GenerateContent(
-		ctx,
-		[]llms.MessageContent{
-			{
-				Role: llms.ChatMessageTypeSystem,
-				Parts: []llms.ContentPart{llms.TextContent{Text: systemPrompt}},
-			},
-			{
-				Role: llms.ChatMessageTypeHuman,
-				Parts: []llms.ContentPart{llms.TextContent{Text: userPrompt}},
-			},
-		},
-		llms.WithStreamingFunc(func(_ context.Context, chunk []byte) error {
-			fmt.Print(string(chunk))
-			return nil
-		}),
-	)
+	err = ollamahelper.GenerateStreamingContent(ctx, llm, systemPrompt, userPrompt, func(_ context.Context, chunk []byte) error {
+		fmt.Print(string(chunk))
+		return nil
+	})
 	if err != nil {
 		return fmt.Errorf("unable to generate answer: %w", err)
 	}
 
 	return nil
-}
-
-func getEmbedder(modelName string) (embeddings.Embedder, error) {
-	embedClient, err := ollama.New(
-		ollama.WithModel(modelName),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load LLM model: %w", err)
-	}
-	embedder, err := embeddings.NewEmbedder(embedClient)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create embedder: %w", err)
-	}
-	return embedder, nil
 }

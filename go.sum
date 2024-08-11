@@ -46,6 +46,8 @@ github.com/PuerkitoBio/goquery v1.8.1 h1:uQxhNlArOIdbrH1tr0UXwdVFgDcZDrZVdcpygAc
 github.com/PuerkitoBio/goquery v1.8.1/go.mod h1:Q8ICL1kNUJ2sXGoAhPGUdYDJvgQgHzJsnnd3H7Ho5jQ=
 github.com/alexhokl/helper v0.0.83 h1:SO2QIJph2BJ2zgIPDCm9rs1S1yq7FSMuPbC80m1+UAw=
 github.com/alexhokl/helper v0.0.83/go.mod h1:IWjzYyqvpo5Vc2k3y7/G4jqLEl2+XVUS9M5/yu7/d5o=
+github.com/alexhokl/helper v0.0.84 h1:I5ftbQ1mGlTOxuUS4qVsHpuux2ouijHgiahNbxcAZSc=
+github.com/alexhokl/helper v0.0.84/go.mod h1:9/kPRqvQyEQslKiSt0htB3cv89QVQQxQMu4AJs4sfiI=
 github.com/amikos-tech/chroma-go v0.1.2 h1:ECiJ4Gn0AuJaj/jLo+FiqrKRHBVDkrDaUQVRBsEMmEQ=
 github.com/amikos-tech/chroma-go v0.1.2/go.mod h1:R/RUp0aaqCWdSXWyIUTfjuNymwqBGLYFgXNZEmisphY=
 github.com/amikos-tech/chroma-go v0.1.4 h1:MQXFBuKHOuZtlLOF6fLRb1VdXKKWp6TwdWxm6v/RUII=
