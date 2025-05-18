@@ -1,7 +1,9 @@
-version: '3'
+version: "3"
+
+env:
+  APP_NAME: rag
 
 tasks:
-
   build:
     desc: Build
     cmd: go build -o /dev/null
@@ -25,16 +27,16 @@ tasks:
   open-coverage-html:
     desc: Test with coverage in HTML and open the HTML
     cmds:
-    - task coverage-html
-    - open coverage.html
+      - task coverage-html
+      - open coverage.html
 
   completion-mac:
     desc: Generate bash completion and save to homebrew
-    cmd: go run main.go completion bash > /opt/homebrew/etc/bash_completion.d/rag
+    cmd: $APP_NAME completion bash > /opt/homebrew/etc/bash_completion.d/$APP_NAME
 
   completion-linux:
     desc: Generate bash completion and save configuration directory
-    cmd: go run main.go completion bash | sudo tee /etc/bash_completion.d/rag
+    cmd: $APP_NAME completion bash | sudo tee /etc/bash_completion.d/$APP_NAME
 
   db-up:
     desc: Start vector database
@@ -45,7 +47,7 @@ tasks:
     cmd: docker compose logs -f vector-database
 
   db-list-collections:
-    desc:  List collections of vector database
+    desc: List collections of vector database
     silent: true
     cmd: xh http://localhost:8000/api/v1/collections
 
